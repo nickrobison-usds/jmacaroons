@@ -17,6 +17,7 @@
 package com.github.nitram509.jmacaroons;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public interface MacaroonsConstants {
 
@@ -86,4 +87,6 @@ public interface MacaroonsConstants {
   int KEY_VALUE_SEPARATOR_LEN = 1;
 
   Charset IDENTIFIER_CHARSET = Charset.forName("UTF-8");
+
+  Charset RAW_BYTE_CHARSET = StandardCharsets.ISO_8859_1;
 }

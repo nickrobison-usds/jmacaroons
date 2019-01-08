@@ -9,6 +9,8 @@ import com.github.nitram509.jmacaroons.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.nitram509.jmacaroons.MacaroonsConstants.RAW_BYTE_CHARSET;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // The ordering is so that we can compare at least a part of the base64 encoding
 @JsonPropertyOrder({"v", "l", "i", "i64", "c", "s", "s64"})
@@ -105,7 +107,7 @@ public class MacaroonJSONV2 {
     @JsonIgnore
     public String parseIdentifier() {
         if (this.getIdentifier().equals("")) {
-            return new String(Base64.decode(this.getIdentifier64()));
+            return new String(Base64.decode(this.getIdentifier64()), RAW_BYTE_CHARSET);
         }
         return this.getIdentifier();
     }
@@ -193,15 +195,15 @@ public class MacaroonJSONV2 {
             if (this.getVID().equals(""))  {
                 return Base64.decode(this.getVID64());
             }
-            return this.getVID().getBytes();
+            return this.getVID().getBytes(RAW_BYTE_CHARSET);
         }
 
         @JsonIgnore
-        public String parseIdentifier() {
+        public byte[] parseIdentifier() {
             if (this.getCID().equals("")) {
-                return new String(Base64.decode(this.getCID64()));
+                return Base64.decode(this.getCID64());
             }
-            return this.getCID();
+            return this.getCID().getBytes(RAW_BYTE_CHARSET);
         }
 
         @JsonIgnore

@@ -19,7 +19,6 @@ package com.github.nitram509.jmacaroons;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.github.nitram509.jmacaroons.CaveatPacket.Type;
@@ -106,14 +105,24 @@ public class MacaroonsVerifier {
     return vresult;
   }
 
+  /**
+   * Inner routine for verifying that the given Macaroon is valid
+   *
+   * @param M - {@link Macaroon} to verify
+   * @param key - {@link byte[]} derived (HMACed) macaroon root key
+   * @return - {@link VerificationResult} whether or not the Macaroon is valid
+   * @throws InvalidKeyException
+   * @throws NoSuchAlgorithmException
+   */
   private VerificationResult macaroon_verify_inner(Macaroon M, byte[] key) throws InvalidKeyException, NoSuchAlgorithmException {
-    byte[] csig = macaroon_hmac(key, M.identifier);
+    byte[] csig = macaroon_hmac(key, M.identifier.getBytes(RAW_BYTE_CHARSET));
     if (M.caveatPackets != null) {
       CaveatPacket[] caveatPackets = M.caveatPackets;
       for (int i = 0; i < caveatPackets.length; i++) {
         CaveatPacket caveat = caveatPackets[i];
         if (caveat == null) continue;
         if (caveat.type == Type.cl) continue;
+        // If there's no VID caveat, then we're looking at a 1st party caveat, so run it directly through the verifyer
         if (!(caveat.type == Type.cid && caveatPackets[Math.min(i + 1, caveatPackets.length - 1)].type == Type.vid)) {
           if (containsElement(predicates, caveat.getValueAsText()) || verifiesGeneral(caveat.getValueAsText())) {
             csig = macaroon_hmac(csig, caveat.rawValue);
@@ -121,7 +130,7 @@ public class MacaroonsVerifier {
         } else {
           i++;
           CaveatPacket caveat_vid = caveatPackets[i];
-          Macaroon boundMacaroon = findBoundMacaroon(caveat.getValueAsText());
+          Macaroon boundMacaroon = findBoundMacaroon(new String(caveat.rawValue, RAW_BYTE_CHARSET));
           if (boundMacaroon == null) {
             String msg = "Couldn't verify 3rd party macaroon, because no discharged macaroon was provided to the verifier.";
             return new VerificationResult(msg);
@@ -139,6 +148,16 @@ public class MacaroonsVerifier {
     return new VerificationResult(csig);
   }
 
+  /**
+   * Verify that the Macaroon is discharged correctly
+   *
+   * @param M - {@link Macaroon} discharge Macaroon
+   * @param C - {@link CaveatPacket} Caveat VID packet
+   * @param sig - {@link byte[]} HMACed root Macaroon ID and derived root key
+   * @return - {@code true} Third party caveat is valid. {@code false} Caveat is invalid
+   * @throws InvalidKeyException
+   * @throws NoSuchAlgorithmException
+   */
   private boolean macaroon_verify_inner_3rd(Macaroon M, CaveatPacket C, byte[] sig) throws InvalidKeyException, NoSuchAlgorithmException {
     if (M == null) return false;
     byte[] enc_plaintext = new byte[MACAROON_SECRET_TEXT_ZERO_BYTES + MACAROON_HASH_BYTES];

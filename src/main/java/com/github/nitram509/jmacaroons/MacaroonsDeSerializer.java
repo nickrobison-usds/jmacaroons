@@ -44,13 +44,13 @@ class MacaroonsDeSerializer {
 
     public static Macaroon deserialize(String serializedMacaroon) throws NotDeSerializableException {
         assert serializedMacaroon != null;
-        byte[] bytes = Base64.decode(serializedMacaroon);
 
         // Determine which format to use
-        if (bytes[0] == '{') {
-            return deserializeJSONFormat(bytes);
+        // Check to see if we're a single JSON Macaroon, or an array of JSON macaroons
+        if (serializedMacaroon.charAt(0) == '{' || serializedMacaroon.charAt(0) == '[') {
+            return deserializeJSONFormat(serializedMacaroon);
         }
-        return deserializeBinaryFormat(bytes);
+        return deserializeBinaryFormat(Base64.decode(serializedMacaroon));
     }
 
   private static Macaroon deserializeBinaryFormat(byte[] bytes) {
@@ -65,14 +65,19 @@ class MacaroonsDeSerializer {
     return deserializeStream(new StatefulPacketReader(bytes));
   }
 
-  private static Macaroon deserializeJSONFormat(byte[] macaroonBytes) {
+  private static Macaroon deserializeJSONFormat(String macaroonBytes) {
     final JsonNode jsonValue;
     try {
       jsonValue = mapper.readTree(macaroonBytes);
     } catch (IOException e) {
       throw new NotDeSerializableException(e.getCause());
     }
-    final int version = jsonValue.get("v").asInt(0);
+
+    // Check for version, if it doesn't have one, assume V2 encoding
+    int version = 2;
+    if (jsonValue.has("v")) {
+      version = jsonValue.get("v").asInt(0);
+    }
     switch (version) {
       case 2: return deserializeV2JSON(jsonValue);
       case 1: throw new IllegalArgumentException("Don't support V1 json, yet");
@@ -92,7 +97,7 @@ class MacaroonsDeSerializer {
     return new Macaroon(jsonMacaroon.getLocation(),
             jsonMacaroon.parseIdentifier(),
             jsonMacaroon.parseSignature(),
-            jsonMacaroon.getCaveatPackets());
+            jsonMacaroon.getCaveatPackets(), MacaroonVersion.VERSION_1);
   }
 
   private static Macaroon deserializeStream(StatefulPacketReader packetReader) {
@@ -119,7 +124,7 @@ class MacaroonsDeSerializer {
         signature = parseSignature(packet, SIGNATURE_BYTES);
       }
     }
-    return new Macaroon(location, identifier, signature, caveats.toArray(new CaveatPacket[caveats.size()]));
+    return new Macaroon(location, identifier, signature, caveats.toArray(new CaveatPacket[caveats.size()]), MacaroonVersion.VERSION_1);
   }
 
   private static byte[] parseSignature(Packet packet, byte[] signaturePacketData) {

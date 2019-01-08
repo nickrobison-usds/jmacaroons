@@ -66,9 +66,15 @@ class CryptoTools {
     return macaroon_hmac(key, tmp);
   }
 
-  static ThirdPartyPacket macaroon_add_third_party_caveat_raw(byte[] old_sig, String key, String identifier) throws InvalidKeyException, NoSuchAlgorithmException {
-    byte[] derived_key = generate_derived_key(key);
+  static ThirdPartyPacket macaroon_add_third_party_caveat_raw(byte[] old_sig, String key, byte[] identifier) throws InvalidKeyException, NoSuchAlgorithmException {
 
+    final byte[] vid = encrypt_vid(old_sig, key);
+    byte[] new_sig = macaroon_hash2(old_sig, vid, identifier);
+    return new ThirdPartyPacket(new_sig, vid);
+  }
+
+  private static byte[] encrypt_vid(byte[] old_sig, String key) throws NoSuchAlgorithmException, InvalidKeyException {
+    byte[] derived_key = generate_derived_key(key);
     byte[] enc_nonce = new byte[MACAROON_SECRET_NONCE_BYTES];
     SECURE_RANDOM.nextBytes(enc_nonce);
     byte[] enc_plaintext = new byte[MACAROON_SECRET_TEXT_ZERO_BYTES + MACAROON_HASH_BYTES];
@@ -81,9 +87,7 @@ class CryptoTools {
     byte[] vid = new byte[VID_NONCE_KEY_SZ];
     System.arraycopy(enc_nonce, 0, vid, 0, MACAROON_SECRET_NONCE_BYTES);
     System.arraycopy(enc_ciphertext, MACAROON_SECRET_BOX_ZERO_BYTES, vid, MACAROON_SECRET_NONCE_BYTES, VID_NONCE_KEY_SZ - MACAROON_SECRET_NONCE_BYTES);
-
-    byte[] new_sig = macaroon_hash2(old_sig, vid, identifier.getBytes(IDENTIFIER_CHARSET));
-    return new ThirdPartyPacket(new_sig, vid);
+    return vid;
   }
 
   static byte[] macaroon_bind(byte[] Msig, byte[] MPsig) throws InvalidKeyException, NoSuchAlgorithmException {

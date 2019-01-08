@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.nitram509.jmacaroons.util.Base64;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.github.nitram509.jmacaroons.CaveatPacket.Type;
@@ -39,25 +38,25 @@ class MacaroonsSerializer {
   private static ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Serialize a given {@link Macaroon} in the {@link MacaroonVersion#V1_BINARY} format.
+   * Serialize a given {@link Macaroon} in the {@link MacaroonVersion.SerializationVersion#V1_BINARY} format.
    * This is the default method from the original jmacaroons implementation.
-   * Users will most likely want to call {@link MacaroonsSerializer#serialize(Macaroon, MacaroonVersion)} with the desired format.
+   * Users will most likely want to call {@link MacaroonsSerializer#serialize(Macaroon, MacaroonVersion.SerializationVersion)} with the desired format.
    *
    * @param macaroon - {@link Macaroon} to serialize.
    * @return - Base64 encoded {@link String} representation of the given {@link Macaroon}.
    */
   public static String serialize(Macaroon macaroon) {
-    return serialize(macaroon, MacaroonVersion.V1_BINARY);
+    return serialize(macaroon, MacaroonVersion.SerializationVersion.V1_BINARY);
   }
 
   /**
-   * Serialize a given {@link Macaroon} in the specified {@link MacaroonVersion#V1_BINARY} format.
+   * Serialize a given {@link Macaroon} in the specified {@link MacaroonVersion.SerializationVersion#V1_BINARY} format.
    *
    * @param macaroon - {@link Macaroon} to serialize.
-   * @param version - {@link MacaroonVersion} to use for serializing.
+   * @param version - {@link MacaroonVersion.SerializationVersion} to use for serializing.
    * @return - Base64 encoded {@link String} representation of the given {@link Macaroon}.
    */
-  public static String serialize(Macaroon macaroon, MacaroonVersion version) {
+  public static String serialize(Macaroon macaroon, MacaroonVersion.SerializationVersion version) {
     switch (version) {
       case V1_BINARY:
         return serializeV1Binary(macaroon);
@@ -101,13 +100,13 @@ class MacaroonsSerializer {
         }
 
         try {
-            return Base64.encodeUrlSafeToString(mapper.writeValueAsBytes(serialized));
+            return mapper.writeValueAsString(serialized);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-  private static String serializeV1Binary(Macaroon macaroon) {
+  private static String  serializeV1Binary(Macaroon macaroon) {
     List<byte[]> packets = new ArrayList<>( 3 + macaroon.caveatPackets.length );
     packets.add(serialize_packet(Type.location, macaroon.location));
     packets.add(serialize_packet(Type.identifier, macaroon.identifier));
@@ -215,11 +214,12 @@ class MacaroonsSerializer {
                         caveats.add(caveat);
                         caveat = new MacaroonJSONV2.CaveatJSONV2();
                     }
-                    if (validUTF8(packet.rawValue)) {
-                        caveat.setCID(packet.getValueAsText());
-                    } else {
-                        caveat.setCID64(Base64.encodeUrlSafeToString(packet.rawValue));
-                    }
+                    // IDs always need to be base64 encoded
+//                    if (validUTF8(packet.rawValue)) {
+//                        caveat.setCID64(packet.getValueAsText());
+//                    } else {
+                        caveat.setCID64(Base64.encodeUrlSafeToString(packet.getRawValue()));
+//                    }
                     seenID = true;
                     break;
                 }
@@ -227,11 +227,12 @@ class MacaroonsSerializer {
                     caveat.setLocation(packet.getValueAsText());
                     break;
                 }
+//                We need to do better handling of non-Base64 encoded data
                 case vid: {
                     if (validUTF8(packet.rawValue)) {
                         caveat.setVID(packet.getValueAsText());
                     } else {
-                        caveat.setVID64(Base64.encodeUrlSafeToString(packet.rawValue));
+                        caveat.setVID64(packet.getValueAsText());
                     }
                     break;
                 }

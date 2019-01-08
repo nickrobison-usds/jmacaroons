@@ -40,19 +40,21 @@ public class Macaroon implements Serializable {
   public final String identifier;
   public final String signature;
   public final CaveatPacket[] caveatPackets;
+  public final MacaroonVersion version;
 
   final byte[] signatureBytes;
 
-  Macaroon(String location, String identifier, byte[] signature) {
-    this(location, identifier, signature, new CaveatPacket[0]);
+  Macaroon(String location, String identifier, byte[] signature, MacaroonVersion version) {
+    this(location, identifier, signature, new CaveatPacket[0], version);
   }
 
-  Macaroon(String location, String identifier, byte[] signature, CaveatPacket[] caveats) {
+  Macaroon(String location, String identifier, byte[] signature, CaveatPacket[] caveats, MacaroonVersion version) {
     this.location = location;
     this.identifier = identifier;
     this.caveatPackets = caveats;
     this.signature = bin2hex(signature);
     this.signatureBytes = signature;
+    this.version = version;
   }
 
   public String inspect() {
@@ -76,15 +78,15 @@ public class Macaroon implements Serializable {
   }
 
   /**
-   * Serialize the macaroon into the {@link MacaroonVersion#V1_BINARY} format.
+   * Serialize the macaroon into the {@link MacaroonVersion.SerializationVersion#V1_BINARY} format.
    *
    * @return - Base64 encoded {@link String} representation of the given
    */
   public String serialize() {
-    return MacaroonsSerializer.serialize(this, MacaroonVersion.V1_BINARY);
+    return MacaroonsSerializer.serialize(this, MacaroonVersion.SerializationVersion.V1_BINARY);
   }
 
-  public String serialize(MacaroonVersion version) {
+  public String serialize(MacaroonVersion.SerializationVersion version) {
     return MacaroonsSerializer.serialize(this, version);
   }
 
