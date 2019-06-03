@@ -13,7 +13,7 @@ addons:
       description: "Java based Macaroon implementation"
     notification_email: nicholas.a.robison@omb.eop.gov
 #    build_command_prepend: "<Your build preprocessing command here>"
-    build_command: "mvn -DskipTests compile"
+    build_command: "mvn -DskipTests clean compile"
     branch_pattern: coverity
 
 after_success:
