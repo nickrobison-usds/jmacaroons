@@ -2,5 +2,19 @@ language: java
 jdk:
   - oraclejdk8
   - oraclejdk11
+
+before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  coverity_scan:
+    project:
+      name: "nickrobison-usds/jmacaroons"
+      description: "Java based Macaroon implementation"
+    notification_email: nicholas.a.robison@omb.eop.gov
+#    build_command_prepend: "<Your build preprocessing command here>"
+    build_command: "mvn -DskipTests compile"
+    branch_pattern: coverity
+
 after_success:
   - mvn clean cobertura:cobertura coveralls:cobertura
