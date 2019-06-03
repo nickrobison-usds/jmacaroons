@@ -1,6 +1,15 @@
 Macaroons are Better Than Cookies!
 ==================================
 
+[![Build Status](https://travis-ci.org/nitram509/jmacaroons.svg?branch=master)](https://travis-ci.org/nitram509/jmacaroons)
+[![Build Status](https://drone.io/github.com/nitram509/jmacaroons/status.png)](https://drone.io/github.com/nitram509/jmacaroons/latest)
+[![License](https://img.shields.io/:license-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.nitram509/jmacaroons.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.nitram509%22%20AND%20a%3A%22jmacaroons%22)
+
+> Note:
+> This repository is a fork of the original [jmacaraoons](https://github.com/nitram509/jmacaroons) project.
+> The primary change is to support the V2 JSON format, as well as a couple of cleanups for better integration with newer versions of the JDK. 
+
 This Java library provides an implementation of macaroons[[1]](http://research.google.com/pubs/pub41892.html),
 which are flexible authorization tokens that work great in distributed systems.
 Like cookies, macaroons are bearer tokens that enable applications to ascertain whether their
@@ -17,17 +26,10 @@ The primary goals are
 There is a [playground](http://www.macaroons.io/) (testing environment) available,
 where you can build and verify macaroons online.
 
-##### License
-
-[![License](https://img.shields.io/:license-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-
 Usage/Import In Your Project
 ----------------------------------
 
 This library jmacaroons is available via Maven Central.
-
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.nitram509/jmacaroons.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.nitram509%22%20AND%20a%3A%22jmacaroons%22)
-
 
 Maven
 ````xml
@@ -42,15 +44,6 @@ Gradle
 ````groovy
 compile 'com.github.nitram509:jmacaroons:0.3.1'
 ````
-
-
-Build Status
---------------------
-
-[![Build Status](https://travis-ci.org/nitram509/jmacaroons.svg?branch=master)](https://travis-ci.org/nitram509/jmacaroons)
-[![Build Status](https://drone.io/github.com/nitram509/jmacaroons/status.png)](https://drone.io/github.com/nitram509/jmacaroons/latest)
-
-[![Coverage Status](https://coveralls.io/repos/nitram509/jmacaroons/badge.png?branch=master)](https://coveralls.io/r/nitram509/jmacaroons?branch=master)
 
 
 Community & Badges
