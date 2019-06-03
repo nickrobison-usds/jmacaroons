@@ -25,8 +25,8 @@ public class MacaroonTest {
 
   @Test
   public void equals_and_hashcode_are_overwritten() {
-    Macaroon m1 = new Macaroon("location", "identifier", new byte[]{1, 2, 3, 5, 6, 7, 8});
-    Macaroon m2 = new Macaroon("location", "identifier", new byte[]{1, 2, 3, 5, 6, 7, 8});
+    Macaroon m1 = new Macaroon("location", "identifier", new byte[]{1, 2, 3, 5, 6, 7, 8}, MacaroonVersion.VERSION_1);
+    Macaroon m2 = new Macaroon("location", "identifier", new byte[]{1, 2, 3, 5, 6, 7, 8}, MacaroonVersion.VERSION_1);
 
     assertThat(m1.equals(m2)).isTrue();
     assertThat(m2.equals(m1)).isTrue();
@@ -37,7 +37,7 @@ public class MacaroonTest {
 
   @Test
   public void inspect_null_safe() {
-    Macaroon macaroon = new Macaroon(null, null, null, null);
+    Macaroon macaroon = new Macaroon(null, null, null, null, MacaroonVersion.VERSION_1);
 
     macaroon.inspect();
 
@@ -46,7 +46,7 @@ public class MacaroonTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void serialize_throws_NPE() {
-    Macaroon macaroon = new Macaroon(null, null, null, null);
+    Macaroon macaroon = new Macaroon(null, null, null, null, MacaroonVersion.VERSION_1);
 
     macaroon.serialize();
 
