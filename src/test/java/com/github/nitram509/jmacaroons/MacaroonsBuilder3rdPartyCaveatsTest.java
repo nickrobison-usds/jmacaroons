@@ -49,4 +49,41 @@ public class MacaroonsBuilder3rdPartyCaveatsTest {
     assertThat(m.serialize()).startsWith("MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMmNpZGVudGlmaWVyIHdlIHVzZWQgb3VyIG90aGVyIHNlY3JldCBrZXkKMDAxZGNpZCBhY2NvdW50ID0gMzczNTkyODU1OQowMDMwY2lkIHRoaXMgd2FzIGhvdyB3ZSByZW1pbmQgYXV0aCBvZiBrZXkvcHJlZAowMDUxdmlkI");
   }
 
+  @Test
+  public void add_third_party_encoded() {
+    String secret = "this is a different super-secret key; never use the same secret twice";
+    String publicIdentifier = "we used our other secret key";
+    String location = "http://mybank/";
+
+    String caveat_key = "4; guaranteed random by a fair toss of the dice";
+    String predicate = "user = Alice";
+    // Test raw byte string
+    String identifier = "³\u0016^Ü\u0091\u0007\u0007'Võ\u0016Ü\u009F\u0090tÄrrª\u0088í9@é? ºrd\u0018x÷";
+    final String third_party_location = "http://auth.mybank/";
+    Macaroon m = new MacaroonsBuilder(location, secret, publicIdentifier)
+            .add_first_party_caveat(predicate)
+            .add_third_party_caveat(third_party_location, caveat_key, identifier.getBytes(MacaroonsConstants.RAW_BYTE_CHARSET))
+            .getMacaroon();
+
+    assertThat(m.identifier).isEqualTo(publicIdentifier);
+    assertThat(m.location).isEqualTo(location);
+    assertThat(m.caveatPackets[0]).isEqualTo(new CaveatPacket(Type.cid, predicate));
+    assertThat(m.caveatPackets[1]).isEqualTo(new CaveatPacket(Type.cid, identifier.getBytes(MacaroonsConstants.RAW_BYTE_CHARSET)));
+    // packet with type VID can't be asserted to be equal to a constant, because random nonce influences signature
+    assertThat(m.caveatPackets[3]).isEqualTo(new CaveatPacket(Type.cl, third_party_location));
+    assertThat(m.caveatPackets).hasSize(4);
+
+    final Macaroon D = new MacaroonsBuilder(third_party_location, caveat_key, identifier.getBytes(MacaroonsConstants.RAW_BYTE_CHARSET))
+            .getMacaroon();
+
+    final Macaroon DP = new MacaroonsBuilder(m)
+            .prepare_for_request(D)
+            .getMacaroon();
+
+    new MacaroonsVerifier(m)
+            .satisfyExact(predicate)
+            .satisfy3rdParty(DP)
+            .assertIsValid(secret);
+  }
+
 }
