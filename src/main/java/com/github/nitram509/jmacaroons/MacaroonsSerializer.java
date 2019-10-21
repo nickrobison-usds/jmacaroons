@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.nitram509.jmacaroons.util.Base64;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.github.nitram509.jmacaroons.CaveatPacket.Type;
 import static com.github.nitram509.jmacaroons.MacaroonsConstants.*;
@@ -50,21 +52,42 @@ class MacaroonsSerializer {
   }
 
   /**
-   * Serialize a given {@link Macaroon} in the specified {@link MacaroonVersion.SerializationVersion#V1_BINARY} format.
+   * Serialize a {@link Macaroon} in the specified {@link MacaroonVersion.SerializationVersion} format.
    *
    * @param macaroon - {@link Macaroon} to serialize.
    * @param version - {@link MacaroonVersion.SerializationVersion} to use for serializing.
    * @return - Base64 encoded {@link String} representation of the given {@link Macaroon}.
    */
   public static String serialize(Macaroon macaroon, MacaroonVersion.SerializationVersion version) {
-    switch (version) {
-      case V1_BINARY:
-        return serializeV1Binary(macaroon);
-      case V2_JSON:
-        return serializeV2JSON(macaroon);
-      default:
-        throw new IllegalArgumentException(String.format("Cannot serialize to version: %s", version));
-    }
+      return serialize(Collections.singletonList(macaroon), version);
+  }
+
+    /**
+     * Serialize a {@link List} of {@link Macaroon} in the specified {@link MacaroonVersion.SerializationVersion} format.
+     *
+     * @param macaroons - {@link List} of {@link Macaroon} to serialize.
+     * @param version - {@link MacaroonVersion.SerializationVersion} to use for serializing.
+     * @return - Base64 encoded {@link String} representation of the given {@link Macaroon}.
+     */
+  public static String serialize(List<Macaroon> macaroons, MacaroonVersion.SerializationVersion version) {
+      switch (version) {
+          case V1_BINARY:
+              // We don't support serializing
+              if (macaroons.size() > 1) {
+                  throw new IllegalArgumentException("Cannot serialize multiple V1 Binary Macaroons");
+              }
+              return serializeV1Binary(macaroons.get(0));
+          case V2_JSON:
+              return serializeMaybeV2Array(macaroons);
+          default:
+              throw new IllegalArgumentException(String.format("Cannot serialize to version: %s", version));
+      }
+  }
+
+  private static String serializeMaybeV2Array(List<Macaroon> macaroons) {
+      return macaroons.stream()
+              .map(MacaroonsSerializer::serializeV2JSON)
+              .collect(Collectors.joining(",", "[", "]"));
   }
 
     private static String serializeV2JSON(Macaroon macaroon) {
