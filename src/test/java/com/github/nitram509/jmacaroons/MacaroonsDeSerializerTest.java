@@ -19,6 +19,9 @@ package com.github.nitram509.jmacaroons;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class MacaroonsDeSerializerTest {
@@ -40,7 +43,7 @@ public class MacaroonsDeSerializerTest {
     m = new MacaroonsBuilder(location, secret, identifier).getMacaroon();
     String serialized = m.serialize();
 
-    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized);
+    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized).get(0);
 
     assertThat(m).isEqualTo(deserialized);
   }
@@ -52,7 +55,7 @@ public class MacaroonsDeSerializerTest {
             .getMacaroon();
     String serialized = m.serialize();
 
-    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized);
+    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized).get(0);
 
     assertThat(m).isEqualTo(deserialized);
   }
@@ -65,7 +68,7 @@ public class MacaroonsDeSerializerTest {
             .getMacaroon();
     String serialized = m.serialize();
 
-    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized);
+    Macaroon deserialized = MacaroonsDeSerializer.deserialize(serialized).get(0);
 
     assertThat(deserialized.identifier).isEqualTo(m.identifier);
     assertThat(deserialized.location).isEqualTo(m.location);
@@ -101,14 +104,14 @@ public class MacaroonsDeSerializerTest {
   @Test
   public void Macaroon_v2_can_be_deserialized() {
     final Macaroon m = new MacaroonsBuilder("http://test.loc", "test-key", "test-id").getMacaroon();
-    assertThat(m).isEqualTo(MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)));
+    assertThat(m).isEqualTo(MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).get(0));
 
     // Add a third party caveat
     final Macaroon m2 = new MacaroonsBuilder(m)
             .add_third_party_caveat("http://auth.mybank", "SECRET for 3rd party caveat", "test-third-party")
             .getMacaroon();
 
-    assertThat(m2).isEqualTo(MacaroonsDeSerializer.deserialize(MacaroonsSerializer.serialize(m2, MacaroonVersion.SerializationVersion.V2_JSON)));
+    assertThat(m2).isEqualTo(MacaroonsDeSerializer.deserialize(MacaroonsSerializer.serialize(m2, MacaroonVersion.SerializationVersion.V2_JSON)).get(0));
   }
 
   @Test
@@ -118,7 +121,27 @@ public class MacaroonsDeSerializerTest {
             .add_third_party_caveat("http://auth.mybank/", "SECRET for 3rd party caveat", identifier)
             .getMacaroon();
 
-    final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON));
+    final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).get(0);
     assertThat(m).isEqualTo(m2);
+  }
+
+  @Test
+  public void Macaroon_v2_json_array_can_be_deserialized() {
+    Macaroon m1 = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2)
+            .add_first_party_caveat("account = 3735928559")
+            .add_third_party_caveat("http://auth.mybank/", "SECRET for 3rd party caveat", identifier)
+            .getMacaroon();
+
+    Macaroon m2 = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2)
+            .add_first_party_caveat("account = 3735928660")
+            .add_third_party_caveat("http://auth.mybank/", "SECRET for 3rd party caveat", identifier)
+            .getMacaroon();
+
+    final List<Macaroon> mArray = new ArrayList<>();
+    mArray.add(m1);
+    mArray.add(m2);
+
+    final List<Macaroon> deserializedArray = MacaroonsDeSerializer.deserialize(MacaroonsSerializer.serialize(mArray, MacaroonVersion.SerializationVersion.V2_JSON));
+    assertThat(mArray).isEqualTo(deserializedArray);
   }
 }

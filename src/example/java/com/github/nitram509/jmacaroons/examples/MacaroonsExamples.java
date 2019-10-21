@@ -23,6 +23,7 @@ import com.github.nitram509.jmacaroons.verifier.TimestampCaveatVerifier;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import static com.github.nitram509.jmacaroons.verifier.AuthoritiesCaveatVerifier.hasAuthority;
 
@@ -52,8 +53,8 @@ public class MacaroonsExamples {
   private void deserialize() {
     String serialized = create().serialize();
 
-    Macaroon macaroon = MacaroonsBuilder.deserialize(serialized);
-    System.out.println(macaroon.inspect());
+    List<Macaroon> macaroon = MacaroonsBuilder.deserialize(serialized);
+    System.out.println(macaroon.get(0).inspect());
   }
 
   private void verify() throws InvalidKeyException, NoSuchAlgorithmException {

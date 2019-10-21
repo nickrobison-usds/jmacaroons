@@ -23,6 +23,7 @@ import com.github.nitram509.jmacaroons.util.Base64;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.github.nitram509.jmacaroons.CaveatPacket.Type;
@@ -42,15 +43,15 @@ class MacaroonsDeSerializer {
       0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    public static Macaroon deserialize(String serializedMacaroon) throws NotDeSerializableException {
+    public static List<Macaroon> deserialize(String serializedMacaroon) throws NotDeSerializableException {
         assert serializedMacaroon != null;
 
         // Determine which format to use
         // Check to see if we're a single JSON Macaroon, or an array of JSON macaroons
         if (serializedMacaroon.charAt(0) == '{' || serializedMacaroon.charAt(0) == '[') {
-            return deserializeJSONFormat(serializedMacaroon);
+            return deserializeMaybeJSONArray(serializedMacaroon);
         }
-        return deserializeBinaryFormat(Base64.decode(serializedMacaroon));
+        return Collections.singletonList(deserializeBinaryFormat(Base64.decode(serializedMacaroon)));
     }
 
   private static Macaroon deserializeBinaryFormat(byte[] bytes) {
@@ -65,7 +66,7 @@ class MacaroonsDeSerializer {
     return deserializeStream(new StatefulPacketReader(bytes));
   }
 
-  private static Macaroon deserializeJSONFormat(String macaroonBytes) {
+  private static List<Macaroon> deserializeMaybeJSONArray(String macaroonBytes) {
     final JsonNode jsonValue;
     try {
       jsonValue = mapper.readTree(macaroonBytes);
@@ -73,6 +74,22 @@ class MacaroonsDeSerializer {
       throw new NotDeSerializableException(e.getCause());
     }
 
+    final List<Macaroon> macaroons = new ArrayList<>();
+
+    // If it's an array, iterate over all the children and convert them
+    if (jsonValue.isArray()) {
+      for (final JsonNode jsonNode : jsonValue) {
+        macaroons.add(deserializeJSONFormat(jsonNode));
+      }
+    } else {
+      // If it's not an array, deserialize the Macaroon directly.
+      macaroons.add(deserializeJSONFormat(jsonValue));
+    }
+
+    return macaroons;
+  }
+
+  private static Macaroon deserializeJSONFormat(JsonNode jsonValue) {
     // Check for version, if it doesn't have one, assume V2 encoding
     int version = 2;
     if (jsonValue.has("v")) {

@@ -20,6 +20,7 @@ import com.github.nitram509.jmacaroons.util.ArrayTools;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import static com.github.nitram509.jmacaroons.CryptoTools.*;
 import static com.github.nitram509.jmacaroons.MacaroonsConstants.*;
@@ -188,10 +189,10 @@ public class MacaroonsBuilder {
 
     /**
      * @param serializedMacaroon serializedMacaroon
-     * @return {@link com.github.nitram509.jmacaroons.Macaroon}
+     * @return {@link List} of {@link com.github.nitram509.jmacaroons.Macaroon}
      * @throws com.github.nitram509.jmacaroons.NotDeSerializableException when serialized macaroon is not valid base64, length is to short or contains invalid packet data
      */
-    public static Macaroon deserialize(String serializedMacaroon) throws IllegalArgumentException {
+    public static List<Macaroon> deserialize(String serializedMacaroon) throws IllegalArgumentException {
         return MacaroonsDeSerializer.deserialize(serializedMacaroon);
     }
 
