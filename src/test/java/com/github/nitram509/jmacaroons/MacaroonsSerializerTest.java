@@ -19,6 +19,9 @@ package com.github.nitram509.jmacaroons;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.fest.assertions.Assertions.assertThat;
 
 public class MacaroonsSerializerTest {
@@ -67,17 +70,31 @@ public class MacaroonsSerializerTest {
   public void Macaroon_v2_json_can_be_serialized() {
       Macaroon m = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2).getMacaroon();
 
-      assertThat(MacaroonsSerializer.serialize(m, MacaroonVersion.SerializationVersion.V2_JSON)).isEqualTo("[{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"s64\":\"49ngKQhSbEwAOa4VEUEV2X_daL8ro3mzQqrw9hfQVS8\"}]");
-      assertThat(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).isEqualTo("[{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"s64\":\"49ngKQhSbEwAOa4VEUEV2X_daL8ro3mzQqrw9hfQVS8\"}]");
+      assertThat(MacaroonsSerializer.serialize(m, MacaroonVersion.SerializationVersion.V2_JSON)).isEqualTo("{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"s64\":\"49ngKQhSbEwAOa4VEUEV2X_daL8ro3mzQqrw9hfQVS8\"}");
+      assertThat(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).isEqualTo("{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"s64\":\"49ngKQhSbEwAOa4VEUEV2X_daL8ro3mzQqrw9hfQVS8\"}");
   }
 
-//  @Test
-//  public void Macaroon_v2_json_with_caveat_can_be_serialized() {
-//      Macaroon m = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2)
-//              .add_first_party_caveat("account = 3735928559")
-//              .getMacaroon();
-//
-//      final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON));
-//      assertThat(m).isEqualTo(m2);
-//  }
+  @Test
+  public void Macaroon_v2_json_array_can_be_serialized() {
+    Macaroon m1 = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2).getMacaroon();
+    Macaroon m2 = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2)
+            .add_first_party_caveat("account = 3735928559")
+            .getMacaroon();
+
+    final List<Macaroon> mArray = new ArrayList<>();
+    mArray.add(m1);
+    mArray.add(m2);
+
+    assertThat(MacaroonsSerializer.serialize(mArray, MacaroonVersion.SerializationVersion.V2_JSON)).isEqualTo("[{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"s64\":\"49ngKQhSbEwAOa4VEUEV2X_daL8ro3mzQqrw9hfQVS8\"},{\"v\":2,\"l\":\"http://mybank/\",\"i\":\"we used our secret key\",\"c\":[{\"i64\":\"YWNjb3VudCA9IDM3MzU5Mjg1NTk\"}],\"s64\":\"Hv5HY_KQ284MHQhHc2fhH07uRWpkkzz2YteXctu4ISg\"}]");
+  }
+
+  @Test
+  public void Macaroon_v2_json_with_caveat_can_be_serialized() {
+      Macaroon m = new MacaroonsBuilder(location, secret, identifier, MacaroonVersion.VERSION_2)
+              .add_first_party_caveat("account = 3735928559")
+              .getMacaroon();
+
+      final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).get(0);
+      assertThat(m).isEqualTo(m2);
+  }
 }
