@@ -59,7 +59,14 @@ class MacaroonsSerializer {
    * @return - Base64 encoded {@link String} representation of the given {@link Macaroon}.
    */
   public static String serialize(Macaroon macaroon, MacaroonVersion.SerializationVersion version) {
-      return serialize(Collections.singletonList(macaroon), version);
+      switch (version) {
+          case V1_BINARY:
+              return serializeV1Binary(macaroon);
+          case V2_JSON:
+              return serializeV2JSON(macaroon);
+          default:
+              throw new IllegalArgumentException(String.format("Cannot serialize to version: %s", version));
+      }
   }
 
     /**
