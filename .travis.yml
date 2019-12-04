@@ -19,7 +19,7 @@ addons:
     branch_pattern: coverity
 
 after_script:
-  - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTest base64RoundTrip" fuzzitdev/parse-complex jmacaroons-fuzz/target/fuzzing-fat-tests.jar
+  - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTest base64RoundTrip" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:cobertura
