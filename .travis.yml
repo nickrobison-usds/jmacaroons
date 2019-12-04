@@ -5,6 +5,8 @@ jdk:
 
 before_install:
   - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  - https://github.com/fuzzitdev/fuzzit/releases/latest/download/fuzzit/Linux/x86_64
+  - chmod a+x fuzzit
 
 addons:
   coverity_scan:
@@ -15,6 +17,9 @@ addons:
 #    build_command_prepend: "<Your build preprocessing command here>"
     build_command: "mvn -DskipTests clean compile"
     branch_pattern: coverity
+
+after_script:
+  - ./fuzzit create job --engine jqf --type ${1} --args "com.github.nitram509.jmacaroons.FuzzTest base64RoundTrip" fuzzitdev/parse-complex jmacaroons-fuzz/target/fuzzing-fat-tests.jar
 
 after_success:
   - mvn clean cobertura:cobertura coveralls:cobertura
