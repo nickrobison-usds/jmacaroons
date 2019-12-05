@@ -6,16 +6,16 @@ stages:
   - name: coverity
     if: branch = coverity
 
+# Main Unit Test Stage
 jdk:
   - openjdk8
   - oraclejdk11
 
+after_success:
+  - mvn clean cobertura:cobertura coveralls:cobertura
+
 jobs:
   include:
-    - stage: test
-      name: "Unit Tests"
-      after_success:
-        - mvn clean cobertura:cobertura coveralls:cobertura
     - stage: fuzz
       name: "Uploading fuzzing"
       jdk: openjdk11
