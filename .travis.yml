@@ -6,16 +6,16 @@ stages:
   - name: coverity
     if: branch = coverity
 
+jdk:
+  - openjdk8
+  - oraclejdk11
+
 jobs:
   include:
     - stage: test
       name: "Unit Tests"
-      jdk:
-        - openjdk8
-        - oraclejdk11
       after_success:
         - mvn clean cobertura:cobertura coveralls:cobertura
-
     - stage: fuzz
       name: "Uploading fuzzing"
       jdk: openjdk11
@@ -25,6 +25,7 @@ jobs:
       script: mvn clean package -DskipTests
       after_script:
         - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests base64RoundTrip" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
+        - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests macaroonSerialization" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
 
     - stage: coverity
       name: "Submit coverity build"
