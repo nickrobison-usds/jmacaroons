@@ -1,10 +1,9 @@
 Macaroons are Better Than Cookies!
 ==================================
 
-[![Build Status](https://travis-ci.org/nitram509/jmacaroons.svg?branch=master)](https://travis-ci.org/nitram509/jmacaroons)
-[![Build Status](https://drone.io/github.com/nitram509/jmacaroons/status.png)](https://drone.io/github.com/nitram509/jmacaroons/latest)
+[![Build Status](https://travis-ci.org/nickrobison-usds/jmacaroons.svg?branch=master)](https://travis-ci.org/nickrobison-usds/jmacaroons)
 [![License](https://img.shields.io/:license-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.nitram509/jmacaroons.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.github.nitram509%22%20AND%20a%3A%22jmacaroons%22)
+[![](https://jitpack.io/v/nickrobison-usds/jmacaroons.svg)](https://jitpack.io/#nickrobison-usds/jmacaroons)
 
 > Note:
 > This repository is a fork of the original [jmacaraoons](https://github.com/nitram509/jmacaroons) project.
@@ -29,20 +28,39 @@ where you can build and verify macaroons online.
 Usage/Import In Your Project
 ----------------------------------
 
-This library jmacaroons is available via Maven Central.
+This library jmacaroons is only available via [jitpack](jitpack.io), which means you'll need to add both the dependency an the jitpack repository.
 
 Maven
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
 ````xml
 <dependency>
-  <groupId>com.github.nitram509</groupId>
-  <artifactId>jmacaroons</artifactId>
-  <version>0.3.1</version>
+    <groupId>com.github.nickrobison-usds</groupId>
+    <artifactId>jmacaroons-core</artifactId>
+    <version>master</version>
 </dependency>
 ````
 
 Gradle
 ````groovy
-compile 'com.github.nitram509:jmacaroons:0.3.1'
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+````
+
+````groovy
+dependencies {
+    implementation 'com.github.nickrobison-usds:jmacaroons-core:master'
+}
 ````
 
 
