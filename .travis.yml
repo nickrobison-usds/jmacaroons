@@ -2,7 +2,8 @@ language: java
 
 stages:
   - test
-  - fuzz
+  - name: fuzz
+    if: branch = master
   - name: coverity
     if: branch = coverity
 
