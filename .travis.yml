@@ -9,8 +9,6 @@ stages:
   - test
   - name: fuzz
     if: branch = master AND type = push
-  - name: coverity
-    if: branch = coverity
 
 # Main Unit Test Stage
 jdk:
