@@ -3,9 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.github.nitram509</groupId>
-  <artifactId>jmacaroons</artifactId>
+  <artifactId>jmacaroons-parent</artifactId>
   <version>0.4.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <modules>
+    <module>jmacaroons-fuzz</module>
+    <module>jmacaroons-core</module>
+  </modules>
+  <packaging>pom</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Pure Java implementation of Macaroons: Cookies with Contextual Caveats for Decentralized Authorization in the Cloud
@@ -32,46 +36,18 @@
       <email>maki@bitkings.de</email>
       <url>https://github.com/nitram509</url>
     </developer>
+    <developer>
+      <name>Nick Robison</name>
+      <organization>United States Digital Service</organization>
+      <email>nicholas.a.robison@omb.eop.gov</email>
+      <url>http://github.com/nickrobison-usds</url>
+    </developer>
   </developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jackson.version>2.9.7</jackson.version>
     <java.version>1.8</java.version>
   </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.13</version>
-    </dependency>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <version>7.0.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.easytesting</groupId>
-      <artifactId>fest-assert</artifactId>
-      <version>1.4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.10.19</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
 
   <build>
     <plugins>
@@ -98,7 +74,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>src/example/java</source>
+                <source>jmacaroons-core/src/example/java</source>
               </sources>
             </configuration>
           </execution>
@@ -129,6 +105,7 @@
           <format>xml</format>
           <maxmem>256m</maxmem>
           <aggregate>true</aggregate>
+          <check/>
         </configuration>
       </plugin>
 

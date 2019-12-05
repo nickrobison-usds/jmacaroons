@@ -1,20 +1,49 @@
 language: java
+
+stages:
+  - test
+  - name: fuzz
+    if: branch = master AND type = push
+  - name: coverity
+    if: branch = coverity
+
+# Main Unit Test Stage
 jdk:
   - openjdk8
   - oraclejdk11
 
-before_install:
-  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-
-addons:
-  coverity_scan:
-    project:
-      name: "nickrobison-usds/jmacaroons"
-      description: "Java based Macaroon implementation"
-    notification_email: nicholas.a.robison@omb.eop.gov
-#    build_command_prepend: "<Your build preprocessing command here>"
-    build_command: "mvn -DskipTests clean compile"
-    branch_pattern: coverity
-
 after_success:
   - mvn clean cobertura:cobertura coveralls:cobertura
+
+jobs:
+  include:
+    - stage: fuzz
+      name: "Uploading fuzzing"
+      jdk: openjdk11
+      before_install:
+        - wget https://github.com/fuzzitdev/fuzzit/releases/latest/download/fuzzit_Linux_x86_64 -O fuzzit
+        - chmod a+x fuzzit
+      script: mvn clean package -DskipTests
+      after_script:
+        - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests base64RoundTrip" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
+        - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests macaroonSerialization" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
+
+    - stage: coverity
+      name: "Submit coverity build"
+      jdk: openjdk11
+      before_install:
+        - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+      addons:
+        coverity_scan:
+          project:
+            name: "nickrobison-usds/jmacaroons"
+            description: "Java based Macaroon implementation"
+          notification_email: nicholas.a.robison@omb.eop.gov
+          #    build_command_prepend: "<Your build preprocessing command here>"
+          build_command: "mvn -DskipTests clean compile"
+#          branch_pattern: coverity
+
+
+
+
+
