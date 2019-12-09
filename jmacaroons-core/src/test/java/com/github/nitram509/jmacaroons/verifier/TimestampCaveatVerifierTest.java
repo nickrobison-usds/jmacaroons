@@ -21,6 +21,10 @@ import org.testng.annotations.Test;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Date;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -51,17 +55,25 @@ public class TimestampCaveatVerifierTest {
   }
 
   @Test
+  public void is_valid_using_timestamp_onyl_precise_in_seconds() {
+    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    String caveat = "time < " + createTimeStampInFuture(dateFormat, 1, ChronoUnit.SECONDS);
+
+    assertThat(verifier.verifyCaveat(caveat)).isTrue();
+  }
+
+  @Test
   public void is_valid_using_timestamp_onyl_precise_in_minutes() {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-    String caveat = "time < " + createTimeStamp1DayInFuture(dateFormat);
+    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+    String caveat = "time < " + createTimeStampInFuture(dateFormat, 1, ChronoUnit.MINUTES);
 
     assertThat(verifier.verifyCaveat(caveat)).isTrue();
   }
 
   @Test
   public void is_valid_using_timestamp_onyl_precise_in_hours() {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH");
-    String caveat = "time < " + createTimeStamp1DayInFuture(dateFormat);
+    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH");
+    String caveat = "time < " + createTimeStampInFuture(dateFormat, 1, ChronoUnit.HOURS);
 
     assertThat(verifier.verifyCaveat(caveat)).isTrue();
   }
@@ -87,9 +99,14 @@ public class TimestampCaveatVerifierTest {
     String caveat = "time < " + dateFormat.format(new Date());
 
     assertThat(verifier.verifyCaveat(caveat)).isFalse();
+    assertThat(verifier.verifyCaveat("not a < real one")).isFalse();
   }
 
   private String createTimeStamp1DayInFuture(DateFormat dateFormat) {
     return dateFormat.format(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24)));
+  }
+
+  private String createTimeStampInFuture(DateTimeFormatter dateFormat, int amount, TemporalUnit unit) {
+    return OffsetDateTime.now().plus(amount, unit).format(dateFormat);
   }
 }
