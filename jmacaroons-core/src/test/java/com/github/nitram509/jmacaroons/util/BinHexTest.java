@@ -24,16 +24,20 @@ public class BinHexTest {
 
   @Test
   public void happy_path() {
-    String hexstr = BinHex.bin2hex((byte) 1, (byte) 128, (byte) 255);
+    final byte[] testBytes = {(byte) 1, (byte) 128, (byte) 255};
+    String hexstr = BinHex.bin2hex(testBytes);
 
     assertThat(hexstr).isEqualTo("0180ff");
+
+    assertThat(BinHex.hex2bin(hexstr)).isEqualTo(testBytes);
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void null_safe() {
-    String hexstr = BinHex.bin2hex(null);
+    assertThat(BinHex.bin2hex((byte[]) null)).isNull();
 
-    assertThat(hexstr).isNull();
+    assertThat(BinHex.hex2bin(null)).isNull();
   }
 
   @Test
