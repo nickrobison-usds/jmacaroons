@@ -135,6 +135,27 @@ public class MacaroonsSerializerTest {
   void Macaroon_v2_json_non_utf8() {
     Macaroon m = new MacaroonsBuilder(location, secret, "nøpé\"� � � � \"", MacaroonVersion.VERSION_2)
             .add_first_party_caveat("account = \uFDD0\uFDD1\uFDD2\uFDD3\uFDD4\uFDD5\uFDD6\uFDD7\uFDD8\uFDD9\uFDDA\uFDDB\uFDDC\uFDDD\uFDDE\uFDDF\uFDE0\uFDE1\uFDE2\uFDE3\uFDE4\uFDE5\uFDE6\uFDE7\uFDE8\uFDE9\uFDEA\uFDEB\uFDEC\uFDED\uFDEE\uFDEF")
+            .add_third_party_caveat("http://test.local", "another secret", "another ID")
+            .getMacaroon();
+
+    final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).get(0);
+    assertThat(m).isEqualTo(m2);
+  }
+
+  @Test
+  void Macaroon_v2_json_third_party_non_utf8() {
+    String secret = "this is a different super-secret key; never use the same secret twice";
+    String publicIdentifier = "we used our other secret key";
+    String location = "http://mybank/";
+
+    String caveat_key = "4; guaranteed random by a fair toss of the dice";
+    String predicate = "user = Alice";
+    // Test raw byte string
+    String identifier = "³\u0016^Ü\u0091\u0007\u0007'Võ\u0016Ü\u009F\u0090tÄrrª\u0088í9@é? ºrd\u0018x÷";
+    final String third_party_location = "http://auth.mybank/";
+    Macaroon m = new MacaroonsBuilder(location, secret, publicIdentifier)
+            .add_first_party_caveat(predicate)
+            .add_third_party_caveat(third_party_location, caveat_key, identifier.getBytes(MacaroonsConstants.RAW_BYTE_CHARSET))
             .getMacaroon();
 
     final Macaroon m2 = MacaroonsDeSerializer.deserialize(m.serialize(MacaroonVersion.SerializationVersion.V2_JSON)).get(0);

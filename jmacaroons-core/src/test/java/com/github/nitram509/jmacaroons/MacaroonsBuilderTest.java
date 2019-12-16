@@ -17,9 +17,11 @@
 package com.github.nitram509.jmacaroons;
 
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -31,7 +33,7 @@ public class MacaroonsBuilderTest {
   private Macaroon m;
 
   @BeforeMethod
-  public void setUp() throws Exception {
+  public void setUp() {
     location = "http://mybank/";
     secret = "this is our super secret key; only we should know it";
     identifier = "we used our secret key";
@@ -83,15 +85,32 @@ public class MacaroonsBuilderTest {
     assertThat(m.serialize()).isEqualTo("MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAyZnNpZ25hdHVyZSDj2eApCFJsTAA5rhURQRXZf91ovyujebNCqvD2F9BVLwo");
   }
 
-  @Test
-  public void create_a_Macaroon_from_a_byteArray() throws UnsupportedEncodingException {
+  @DataProvider(name = "computed_macaroon_provider")
+  public Object[][] computed_macaroons() {
     identifier ="we used our secret key";
-    byte[] secretBytes = secret.getBytes("ASCII");
+    byte[] secretBytes = secret.getBytes(StandardCharsets.US_ASCII);
     location ="http://www.example.org";
 
-    m = MacaroonsBuilder.create(location, secretBytes, identifier);
+    return new Object[][]{
+            {MacaroonsBuilder.create(location, secretBytes, identifier, MacaroonVersion.VERSION_1)},
+            {MacaroonsBuilder.create(location, secret, identifier.getBytes(StandardCharsets.US_ASCII), MacaroonVersion.VERSION_1)},
+            {MacaroonsBuilder.create(location, secretBytes, identifier.getBytes(StandardCharsets.US_ASCII), MacaroonVersion.VERSION_1)},
+            {MacaroonsBuilder.create(location, secretBytes, identifier, MacaroonVersion.VERSION_2)},
+            {MacaroonsBuilder.create(location, secret, identifier.getBytes(StandardCharsets.US_ASCII), MacaroonVersion.VERSION_2)},
+            {MacaroonsBuilder.create(location, secretBytes, identifier.getBytes(StandardCharsets.US_ASCII), MacaroonVersion.VERSION_2)},
+            {MacaroonsBuilder.create(location, secretBytes, identifier)},
+            {MacaroonsBuilder.create(location, secret, identifier.getBytes(StandardCharsets.US_ASCII))},
+            {MacaroonsBuilder.create(location, secretBytes, identifier.getBytes(StandardCharsets.US_ASCII))},
+    };
+  }
 
-    assertThat(m.signature).isEqualTo("5c748a4dabfd5ff2a0b5ab56120c8021912b591ac09023b4bffbc6e1b54e664f");
+  @Test(dataProvider = "computed_macaroon_provider")
+  public void ensure_static_methods_work_correctly(Macaroon m) {
+
+    final String serialize = m.serialize();
+    final Macaroon m2 = MacaroonsBuilder.deserialize(serialize).get(0);
+
+    assertThat(m.equals(m2)).isTrue();
   }
 
 }

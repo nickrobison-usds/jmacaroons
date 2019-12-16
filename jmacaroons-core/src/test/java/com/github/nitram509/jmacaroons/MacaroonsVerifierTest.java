@@ -25,6 +25,7 @@ import java.util.Date;
 
 import static com.github.nitram509.jmacaroons.util.BinHex.hex2bin;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
 public class MacaroonsVerifierTest {
 
@@ -67,8 +68,10 @@ public class MacaroonsVerifierTest {
     MacaroonsVerifier verifier = new MacaroonsVerifier(m);
     try {
       verifier.assertIsValid("wrong secret");
+      fail("Should have thrown a validation exception");
     } catch (MacaroonValidationException e) {
-      assertThat(e.getMacaroon()).isEqualTo(m);
+      assertThat(e.getMacaroon().equals(m)).isTrue();
+      assertThat(e.getMessage()).isEqualTo("Verification failed. Signature doesn't match. Maybe the key was wrong OR some caveats aren't satisfied.");
     }
   }
 
