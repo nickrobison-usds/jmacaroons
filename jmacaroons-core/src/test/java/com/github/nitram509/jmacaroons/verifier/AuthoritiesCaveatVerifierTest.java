@@ -43,7 +43,8 @@ public class AuthoritiesCaveatVerifierTest {
         {"authorities = FOO,BAR,FOO, BAR, ADMIN", new String[]{"ADMIN", "FOO"}, true},
         {"authorities = FOO", new String[]{"ADMIN", "FOO"}, false},
         {"authorities = ,,,FOO,,, ,", new String[]{"FOO"}, true},
-        {"authorities = ,,,foo,,, ,", new String[]{"FOO"}, false}
+        {"authorities = ,,,foo,,, ,", new String[]{"FOO"}, false},
+            {"authorities = ", new String[]{}, false}
     };
   }
 
@@ -53,5 +54,9 @@ public class AuthoritiesCaveatVerifierTest {
 
     boolean actual = verifier.verifyCaveat(sampleCaveat);
     assertThat(actual).isEqualTo(isValid);
+
+    // Verify the helper method as well
+    verifier = AuthoritiesCaveatVerifier.hasAuthority(authorityToHave);
+    assertThat(verifier.verifyCaveat(sampleCaveat)).isEqualTo(isValid);
   }
 }

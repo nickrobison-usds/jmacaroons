@@ -159,13 +159,12 @@ public class MacaroonsVerifier {
    * @throws NoSuchAlgorithmException
    */
   private boolean macaroon_verify_inner_3rd(Macaroon M, CaveatPacket C, byte[] sig) throws InvalidKeyException, NoSuchAlgorithmException {
-    if (M == null) return false;
     byte[] enc_plaintext = new byte[MACAROON_SECRET_TEXT_ZERO_BYTES + MACAROON_HASH_BYTES];
     byte[] enc_ciphertext = new byte[MACAROON_SECRET_BOX_ZERO_BYTES + MACAROON_HASH_BYTES + SECRET_BOX_OVERHEAD];
 
     byte[] vid_data = C.rawValue;
     assert vid_data.length == VID_NONCE_KEY_SZ;
-    /**
+    /*
      * the nonce is in the first MACAROON_SECRET_NONCE_BYTES
      * of the vid; the ciphertext is in the rest of it.
      */

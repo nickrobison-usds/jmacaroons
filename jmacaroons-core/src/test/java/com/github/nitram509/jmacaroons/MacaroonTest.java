@@ -17,7 +17,10 @@
 package com.github.nitram509.jmacaroons;
 
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.nio.charset.StandardCharsets;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -51,6 +54,55 @@ public class MacaroonTest {
     macaroon.serialize();
 
     // NullPointerException
+  }
+
+  @DataProvider(name = "potentially_equal_macaroons")
+  public static Object[][] testMacaroonEquality() {
+
+    final Macaroon noCaveats = MacaroonsBuilder.create("http://equality.test", "secret, secret".getBytes(StandardCharsets.US_ASCII), "correct id", MacaroonVersion.VERSION_2);
+
+    final Macaroon singleMacaroon = new MacaroonsBuilder("http://equality.test", "secret, secret".getBytes(StandardCharsets.US_ASCII), "correct id", MacaroonVersion.VERSION_2)
+            .add_first_party_caveat("caveat = false")
+            .getMacaroon();
+
+    return new Object[][]{
+            {noCaveats, true},
+            {"Not a macaroon", false},
+            {singleMacaroon, false},
+            {MacaroonsBuilder.create("http://equality.wrong", "secret, secret".getBytes(StandardCharsets.US_ASCII), "correct id", MacaroonVersion.VERSION_2), false},
+            {MacaroonsBuilder.create("http://equality.test", "secret".getBytes(StandardCharsets.US_ASCII), "correct id", MacaroonVersion.VERSION_2), false},
+            {MacaroonsBuilder.create("http://equality.test", "secret, secret".getBytes(StandardCharsets.US_ASCII), "wrong id", MacaroonVersion.VERSION_1), false},
+            {new Macaroon("http://equality.test", "correct id", "not a sig".getBytes(StandardCharsets.UTF_8), MacaroonVersion.VERSION_2), false},
+            {new Macaroon(null, "correct id", "not a sig".getBytes(StandardCharsets.UTF_8), MacaroonVersion.VERSION_2), false},
+            {new Macaroon("http://equality.test", null, "not a sig".getBytes(StandardCharsets.UTF_8), MacaroonVersion.VERSION_2), false},
+            {new Macaroon("http://equality.test", "correct id",null, MacaroonVersion.VERSION_2), false},
+    };
+  }
+
+  @Test(dataProvider = "potentially_equal_macaroons")
+  public void test_macaroon_equality(Object potentiallyEqual, boolean isEqual) {
+    final Macaroon m = new MacaroonsBuilder("http://equality.test", "secret, secret".getBytes(StandardCharsets.US_ASCII), "correct id", MacaroonVersion.VERSION_2).getMacaroon();
+
+    assertThat(m.equals(potentiallyEqual)).isEqualTo(isEqual);
+    assertThat(potentiallyEqual.equals(m)).isEqualTo(isEqual);
+  }
+
+  @DataProvider(name = "caveat_provider")
+  public static Object[][] caveat_provider() {
+
+    return new Object[][]{
+            {"Not a caveat", false},
+            {new CaveatPacket(CaveatPacket.Type.cid, "caveat value".getBytes(StandardCharsets.UTF_8)), true},
+            {new CaveatPacket(CaveatPacket.Type.location, "caveat value".getBytes(StandardCharsets.UTF_8)), false},
+    };
+  }
+
+  @Test(dataProvider = "caveat_provider")
+  public void test_caveat_equality(Object potentiallyEqual, boolean isEqual) {
+    final CaveatPacket caveatPacket = new CaveatPacket(CaveatPacket.Type.cid, "caveat value".getBytes(StandardCharsets.UTF_8));
+
+    assertThat(caveatPacket.equals(potentiallyEqual)).isEqualTo(isEqual);
+    assertThat(potentiallyEqual.equals(caveatPacket)).isEqualTo(isEqual);
   }
 
 }

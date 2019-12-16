@@ -25,6 +25,7 @@ import java.util.Date;
 
 import static com.github.nitram509.jmacaroons.util.BinHex.hex2bin;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
 public class MacaroonsVerifierTest {
 
@@ -37,7 +38,7 @@ public class MacaroonsVerifierTest {
   private byte[] secretBytes;
 
   @BeforeMethod
-  public void setUp() throws Exception {
+  public void setUp() {
     location = "http://mybank/";
     secret = "this is our super secret key; only we should know it";
     secretBytes = hex2bin("a96173391e6bfa0356bbf095621b8af1510968e770e4d27d62109b7dc374814b");
@@ -60,14 +61,18 @@ public class MacaroonsVerifierTest {
     assertThat(verifier.isValid(secretBytes)).isTrue();
   }
 
-  @Test(expectedExceptions = MacaroonValidationException.class)
+  @Test
   public void verification_assertion() {
     m = new MacaroonsBuilder(location, secret, identifier).getMacaroon();
 
     MacaroonsVerifier verifier = new MacaroonsVerifier(m);
-    verifier.assertIsValid("wrong secret");
-
-    // expect MacaroonValidationException
+    try {
+      verifier.assertIsValid("wrong secret");
+      fail("Should have thrown a validation exception");
+    } catch (MacaroonValidationException e) {
+      assertThat(e.getMacaroon().equals(m)).isTrue();
+      assertThat(e.getMessage()).isEqualTo("Verification failed. Signature doesn't match. Maybe the key was wrong OR some caveats aren't satisfied.");
+    }
   }
 
   @Test

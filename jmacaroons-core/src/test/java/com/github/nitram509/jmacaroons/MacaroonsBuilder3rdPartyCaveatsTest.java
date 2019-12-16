@@ -84,6 +84,13 @@ public class MacaroonsBuilder3rdPartyCaveatsTest {
             .satisfyExact(predicate)
             .satisfy3rdParty(DP)
             .assertIsValid(secret);
+
+    final boolean valid = new MacaroonsVerifier(m)
+            .satisfyExact(predicate)
+            .satisfy3rdParty(null)
+            .isValid(secret);
+
+    assertThat(valid).isFalse();
   }
 
 }

@@ -19,7 +19,11 @@ package com.github.nitram509.jmacaroons;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Random;
+import java.util.stream.Stream;
+
 import static com.github.nitram509.jmacaroons.CaveatPacket.Type;
+import static com.github.nitram509.jmacaroons.MacaroonsConstants.MACAROON_MAX_CAVEATS;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class MacaroonsBuilderCaveatsTest {
@@ -30,7 +34,7 @@ public class MacaroonsBuilderCaveatsTest {
   private Macaroon m;
 
   @BeforeMethod
-  public void setUp() throws Exception {
+  public void setUp() {
     location = "http://mybank/";
     secret = "this is our super secret key; only we should know it";
     identifier = "we used our secret key";
@@ -44,8 +48,54 @@ public class MacaroonsBuilderCaveatsTest {
 
     assertThat(m.identifier).isEqualTo(m.identifier);
     assertThat(m.location).isEqualTo(m.location);
+    assertThat(m.caveatPackets[0].getType()).isEqualTo(Type.cid);
     assertThat(m.caveatPackets).isEqualTo(new CaveatPacket[]{new CaveatPacket(Type.cid, "account = 3735928559")});
     assertThat(m.signature).isEqualTo("1efe4763f290dbce0c1d08477367e11f4eee456a64933cf662d79772dbb82128");
+  }
+
+  @Test
+  public void add_null_first_party_caveat() {
+    m = new MacaroonsBuilder(location, secret, identifier)
+            .add_first_party_caveat(null)
+            .getMacaroon();
+
+    assertThat(m.inspect()).isEqualTo("location http://mybank/\n" +
+            "identifier we used our secret key\n" +
+            "signature e3d9e02908526c4c0039ae15114115d97fdd68bf2ba379b342aaf0f617d0552f\n");
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  void add_too_many_first_party_caveats() {
+    final MacaroonsBuilder builder = new MacaroonsBuilder(location, secret, identifier);
+    caveatSupplier()
+            .limit(MACAROON_MAX_CAVEATS)
+            .forEach(builder::add_first_party_caveat);
+
+    final Macaroon m = builder.getMacaroon();
+    assertThat(m.caveatPackets.length).isEqualTo(MACAROON_MAX_CAVEATS);
+
+    final MacaroonsBuilder modify = MacaroonsBuilder.modify(m);
+
+    caveatSupplier()
+            .limit(1)
+            .forEach(modify::add_first_party_caveat);
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  void add_too_many_third_party_caveats() {
+    final MacaroonsBuilder builder = new MacaroonsBuilder(location, secret, identifier);
+    caveatSupplier()
+            .limit(MACAROON_MAX_CAVEATS)
+            .forEach(cav -> builder.add_third_party_caveat("http://local.test", "secret", cav));
+
+    final Macaroon m = builder.getMacaroon();
+    assertThat(m.caveatPackets.length).isEqualTo(MACAROON_MAX_CAVEATS);
+
+    final MacaroonsBuilder modify = MacaroonsBuilder.modify(m);
+
+    caveatSupplier()
+            .limit(1)
+            .forEach(cav -> modify.add_third_party_caveat("http://local.test", "secret", cav));
   }
 
   @Test
@@ -61,8 +111,17 @@ public class MacaroonsBuilderCaveatsTest {
 
     assertThat(m.identifier).isEqualTo(m.identifier);
     assertThat(m.location).isEqualTo(m.location);
-    assertThat(m.caveatPackets).isEqualTo(new CaveatPacket[]{new CaveatPacket(Type.cid, "account = 3735928559")});
     assertThat(m.signature).isEqualTo("1efe4763f290dbce0c1d08477367e11f4eee456a64933cf662d79772dbb82128");
+
+    final CaveatPacket expectedCaveat = new CaveatPacket(Type.cid, "account = 3735928559");
+    assertThat(m.caveatPackets[0].equals(expectedCaveat)).isTrue();
+    assertThat(m.caveatPackets[0].equals(new CaveatPacket(Type.cid, "account = 1"))).isFalse();
+    assertThat(m.caveatPackets[0].getType()).isEqualTo(expectedCaveat.getType());
+    assertThat(m.caveatPackets[0].toString()).isEqualTo("cid [97, 99, 99, 111, 117, 110, 116, 32, 61, 32, 51, 55, 51, 53, 57, 50, 56, 53, 53, 57]");
+    assertThat(m.caveatPackets[0].getValueAsText()).isEqualTo(expectedCaveat.getValueAsText());
+    assertThat(m.caveatPackets).isEqualTo(new CaveatPacket[]{expectedCaveat});
+    assertThat(m.caveatPackets).isNotEqualTo(new CaveatPacket[]{});
+
   }
 
   @Test
@@ -126,6 +185,11 @@ public class MacaroonsBuilderCaveatsTest {
             "cid account = 3735928559\n" +
             "signature 1efe4763f290dbce0c1d08477367e11f4eee456a64933cf662d79772dbb82128\n"
     );
+  }
+
+  private static Stream<String> caveatSupplier() {
+    final Random randomGenerator = new Random();
+    return Stream.generate(() -> String.format("random_value = %s", randomGenerator.nextInt()));
   }
 
 }
