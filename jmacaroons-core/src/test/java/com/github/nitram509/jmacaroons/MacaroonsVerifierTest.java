@@ -37,7 +37,7 @@ public class MacaroonsVerifierTest {
   private byte[] secretBytes;
 
   @BeforeMethod
-  public void setUp() throws Exception {
+  public void setUp() {
     location = "http://mybank/";
     secret = "this is our super secret key; only we should know it";
     secretBytes = hex2bin("a96173391e6bfa0356bbf095621b8af1510968e770e4d27d62109b7dc374814b");
@@ -60,14 +60,16 @@ public class MacaroonsVerifierTest {
     assertThat(verifier.isValid(secretBytes)).isTrue();
   }
 
-  @Test(expectedExceptions = MacaroonValidationException.class)
+  @Test
   public void verification_assertion() {
     m = new MacaroonsBuilder(location, secret, identifier).getMacaroon();
 
     MacaroonsVerifier verifier = new MacaroonsVerifier(m);
-    verifier.assertIsValid("wrong secret");
-
-    // expect MacaroonValidationException
+    try {
+      verifier.assertIsValid("wrong secret");
+    } catch (MacaroonValidationException e) {
+      assertThat(e.getMacaroon()).isEqualTo(m);
+    }
   }
 
   @Test

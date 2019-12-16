@@ -19,9 +19,9 @@ package com.github.nitram509.jmacaroons;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.nitram509.jmacaroons.util.Base64;
+import com.github.nitram509.jmacaroons.util.UTF8;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,7 +79,7 @@ class MacaroonsSerializer {
   public static String serialize(List<Macaroon> macaroons, MacaroonVersion.SerializationVersion version) {
       switch (version) {
           case V1_BINARY:
-              // We don't support serializing
+              // We don't support serializing multiple V1 Binary Macaroon
               if (macaroons.size() > 1) {
                   throw new IllegalArgumentException("Cannot serialize multiple V1 Binary Macaroons");
               }
@@ -105,14 +105,14 @@ class MacaroonsSerializer {
         serialized.setLocation(macaroon.location);
 
         // Identifier
-        if (validUTF8(macaroon.identifier.getBytes())) {
+        if (UTF8.validUTF8(macaroon.identifier.getBytes())) {
             serialized.setIdentifier(macaroon.identifier);
         } else {
             serialized.setIdentifier64(Base64.encodeUrlSafeToString(macaroon.identifier.getBytes()));
         }
 
         // Signature
-        if (validUTF8(macaroon.signatureBytes)) {
+        if (UTF8.validUTF8(macaroon.signatureBytes)) {
             serialized.setSignature(macaroon.signature);
         } else {
             serialized.setSignature64(Base64.encodeUrlSafeToString(macaroon.signatureBytes));
@@ -184,54 +184,7 @@ class MacaroonsSerializer {
     return packet;
   }
 
-  /**
-   * Determines whether or not the given byte array contains only valid UTF-8 characters.
-   * Used to determine if an input needs to be base64 encoded, or not.
-   * Snagged from this StackOverflow answer: https://stackoverflow.com/questions/887148/how-to-determine-if-a-string-contains-invalid-encoded-characters
-   *
-   * @param input - {@link byte[]} input string to check
-   * @return - {@code true} String is only UTF-8 characters. {@code false} String contains non-UTF8 characters
-   */
-  private static boolean validUTF8(byte[] input) {
-    int i = 0;
-    // Check for BOM
-    if (input.length >= 3 && (input[0] & 0xFF) == 0xEF
-            && (input[1] & 0xFF) == 0xBB & (input[2] & 0xFF) == 0xBF) {
-      i = 3;
-    }
-
-    int end;
-    for (int j = input.length; i < j; ++i) {
-      int octet = input[i];
-      if ((octet & 0x80) == 0) {
-        continue; // ASCII
-      }
-
-      // Check for UTF-8 leading byte
-      if ((octet & 0xE0) == 0xC0) {
-        end = i + 1;
-      } else if ((octet & 0xF0) == 0xE0) {
-        end = i + 2;
-      } else if ((octet & 0xF8) == 0xF0) {
-        end = i + 3;
-      } else {
-        // Java only supports BMP so 3 is max
-        return false;
-      }
-
-      while (i < end) {
-        i++;
-        octet = input[i];
-        if ((octet & 0xC0) != 0x80) {
-          // Not a valid trailing byte
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private static List<MacaroonJSONV2.CaveatJSONV2> serializeCaveatsToJSON(CaveatPacket[] packets) {
+    private static List<MacaroonJSONV2.CaveatJSONV2> serializeCaveatsToJSON(CaveatPacket[] packets) {
         boolean seenID = false;
         List<MacaroonJSONV2.CaveatJSONV2> caveats = new ArrayList<>();
         MacaroonJSONV2.CaveatJSONV2 caveat = new MacaroonJSONV2.CaveatJSONV2();
@@ -259,7 +212,7 @@ class MacaroonsSerializer {
                 }
 //                We need to do better handling of non-Base64 encoded data
                 case vid: {
-                    if (validUTF8(packet.rawValue)) {
+                    if (UTF8.validUTF8(packet.rawValue)) {
                         caveat.setVID(packet.getValueAsText());
                     } else {
                         caveat.setVID64(packet.getValueAsText());
