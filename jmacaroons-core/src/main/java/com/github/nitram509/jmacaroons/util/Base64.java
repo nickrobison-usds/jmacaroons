@@ -21,18 +21,22 @@ import java.util.Arrays;
  */
 public class Base64 {
 
-  private static final char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
-  private static final int[] decode = new int[128];
-  private static final char pad = '=';
+  private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
+  private static final int[] DECODE = new int[128];
+  private static final char PAD = '=';
 
   static {
-    Arrays.fill(decode, -1);
-    for (int i = 0; i < alphabet.length; i++) {
-      decode[alphabet[i]] = i;
+    Arrays.fill(DECODE, -1);
+    for (int i = 0; i < ALPHABET.length; i++) {
+      DECODE[ALPHABET[i]] = i;
     }
-    decode[pad] = 0;
-    decode['+'] = 62; // backward compatible with regular base64
-    decode['/'] = 63; // backward compatible with regular base64
+    DECODE[PAD] = 0;
+    DECODE['+'] = 62; // backward compatible with regular base64
+    DECODE['/'] = 63; // backward compatible with regular base64
+  }
+
+  private Base64() {
+    // Not used
   }
 
   /**
@@ -42,7 +46,7 @@ public class Base64 {
    * @return Decoded bytes.
    */
   public static byte[] decode(char[] chars) {
-    return decode(chars, decode, pad);
+    return decode(chars, DECODE, PAD);
   }
 
   /**
@@ -52,7 +56,7 @@ public class Base64 {
    * @return Decoded bytes.
    */
   public static byte[] decode(String str) {
-    return decode(str.toCharArray(), decode, pad);
+    return decode(str.toCharArray(), DECODE, PAD);
   }
 
   /**
@@ -62,7 +66,7 @@ public class Base64 {
    * @return Encoded chars.
    */
   public static char[] encodeUrlSafe(byte[] bytes) {
-    return encodeUrlSafe(bytes, alphabet, pad);
+    return encodeUrlSafe(bytes, ALPHABET, PAD);
   }
 
   /**
@@ -73,7 +77,7 @@ public class Base64 {
    * @return Encoded chars.
    */
   public static char[] encodeUrlSafe(byte[] bytes, boolean padded) {
-    return encodeUrlSafe(bytes, alphabet, padded ? pad : 0);
+    return encodeUrlSafe(bytes, ALPHABET, padded ? PAD : 0);
   }
 
   /**
@@ -90,12 +94,14 @@ public class Base64 {
 
     if (len == 0) return new byte[0];
 
-    int padCount = (src[len - 1] == pad ? (src[len - 2] == pad ? 2 : 1) : 0);
+    final int padLength = src[len - 2] == pad ? 2 : 1;
+    int padCount = (src[len - 1] == pad ? padLength : 0);
     int bytes = (len * 6 >> 3) - padCount;
     int blocks = (bytes / 3) * 3;
 
     byte[] dst = new byte[bytes];
-    int si = 0, di = 0;
+    int si = 0;
+    int di = 0;
 
     while (di < blocks) {
       int n = table[src[si++]] << 18 | table[src[si++]] << 12 | table[src[si++]] << 6 | table[src[si++]];
@@ -115,6 +121,9 @@ public class Base64 {
           n |= table[src[si + 1]] << 12;
         case 1:
           n |= table[src[si]] << 18;
+          break;
+        default:
+          throw new IllegalStateException("Unexpected value: " + (len - si));
       }
       for (int r = 16; di < bytes; r -= 8) {
         dst[di++] = (byte) (n >> r);
@@ -144,7 +153,8 @@ public class Base64 {
     if (pad == 0 && tail > 0) chars -= 3 - tail;
 
     char[] dst = new char[chars];
-    int si = 0, di = 0;
+    int si = 0;
+    int di = 0;
 
     while (si < blocks) {
       int n = (src[si++] & 0xff) << 16 | (src[si++] & 0xff) << 8 | (src[si++] & 0xff);
@@ -174,7 +184,7 @@ public class Base64 {
   /**
    * Encode to String without padding
    * @param bytes bytes
-   * @return
+   * @return encoded string
    */
   public static String encodeUrlSafeToString(byte[] bytes) {
     return new String(encodeUrlSafe(bytes, false));
