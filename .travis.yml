@@ -1,48 +1,49 @@
 env:
   global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    #   via the "travis encrypt" command using the project repo's public key
-    - secure: "Xv7SrAPoASQbWKMOhlpwsuEVn7EXSSWrLDQTE3yG7FFEgJ6mScm915BSrjAoBfOM330P+VcjJtG9WBQIyJ3qkTM6jsZaR6nddShtv9krHl+FKNicnOVG/Ub2r/EKlqxIpalAXRuuMz9Bfmi/xKCue7CHaD8ix7jZYFyDEsH6QWAupRXu3sg4ZqxFUk1a7BJeK1Lunk91aKWLyZbEZd9FsTFrmAJsgAGuD6xD/cMXwnNiyxqNlzNfAINg9Pl5OFs6ze5pmvZxdFBNp0FaIU/nqcjdBwP0hnohCZAc9y7rqJjhlm+MXeAqdVFGx8CMQUBoOdCv94+HHFJGvvOs0dgLOQw7TiPbAzA+Hu7OcRNrn0O7lnHC4MJ2cCktvF3d2Ujn490phDQOR/M2C7B7I6robB6d3fSWh3IKuq/eLnSREmRKg0bPpx8qna6gx6g02E6gN/bUMDDspF5ymnt8e/tb5Sh1Yf1YRpUzzT5ZoFju6GBnmN03lw1bPzVJMcmTrx53G6pChnTRp3RUpiz55LYMIfZ9l4Gthl4UnQsJYEkJR5J8sibsCvU1BMJTSW0+VAD0Dqj7X3bwD24Pup0Gz5e1P/zmFnV7Mv+eW2Rx7P9ylCcNGz34Epg5SI81whU+TgehVbVkEwpfngL+sv6B1qviZSzxEQPCPxiCPQyrS2K55bo="
+  - secure: Xv7SrAPoASQbWKMOhlpwsuEVn7EXSSWrLDQTE3yG7FFEgJ6mScm915BSrjAoBfOM330P+VcjJtG9WBQIyJ3qkTM6jsZaR6nddShtv9krHl+FKNicnOVG/Ub2r/EKlqxIpalAXRuuMz9Bfmi/xKCue7CHaD8ix7jZYFyDEsH6QWAupRXu3sg4ZqxFUk1a7BJeK1Lunk91aKWLyZbEZd9FsTFrmAJsgAGuD6xD/cMXwnNiyxqNlzNfAINg9Pl5OFs6ze5pmvZxdFBNp0FaIU/nqcjdBwP0hnohCZAc9y7rqJjhlm+MXeAqdVFGx8CMQUBoOdCv94+HHFJGvvOs0dgLOQw7TiPbAzA+Hu7OcRNrn0O7lnHC4MJ2cCktvF3d2Ujn490phDQOR/M2C7B7I6robB6d3fSWh3IKuq/eLnSREmRKg0bPpx8qna6gx6g02E6gN/bUMDDspF5ymnt8e/tb5Sh1Yf1YRpUzzT5ZoFju6GBnmN03lw1bPzVJMcmTrx53G6pChnTRp3RUpiz55LYMIfZ9l4Gthl4UnQsJYEkJR5J8sibsCvU1BMJTSW0+VAD0Dqj7X3bwD24Pup0Gz5e1P/zmFnV7Mv+eW2Rx7P9ylCcNGz34Epg5SI81whU+TgehVbVkEwpfngL+sv6B1qviZSzxEQPCPxiCPQyrS2K55bo=
 language: java
-
 stages:
-  - test
-  - name: fuzz
-    if: branch = master AND type = push
-
-# Main Unit Test Stage
+- test
+- name: fuzz
+  if: branch = master AND type = push
 jdk:
-  - openjdk8
-  - oraclejdk11
-
+- openjdk8
+- oraclejdk11
 before_install:
-  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+- echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END
+  CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+script:
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=nickrobison-usds_jmacaroons
+
+after_success:
+- mvn clean cobertura:cobertura coveralls:cobertura
+
+jobs:
+  include:
+  - stage: fuzz
+    name: Uploading fuzzing
+    jdk: openjdk11
+    before_install:
+    - wget https://github.com/fuzzitdev/fuzzit/releases/latest/download/fuzzit_Linux_x86_64
+      -O fuzzit
+    - chmod a+x fuzzit
+    script: mvn clean package -DskipTests
+    after_script:
+    - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests
+      base64RoundTrip" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
+    - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests
+      macaroonSerialization" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
 
 addons:
   coverity_scan:
     project:
-      name: "nickrobison-usds/jmacaroons"
-      description: "Java based Macaroon implementation"
+      name: nickrobison-usds/jmacaroons
+      description: Java based Macaroon implementation
     notification_email: nicholas.a.robison@omb.eop.gov
-    #    build_command_prepend: "<Your build preprocessing command here>"
-    build_command: "mvn -DskipTests clean compile"
+    build_command: mvn -DskipTests clean compile
     branch_pattern: coverity
-
-after_success:
-  - mvn clean cobertura:cobertura coveralls:cobertura
-
-jobs:
-  include:
-    - stage: fuzz
-      name: "Uploading fuzzing"
-      jdk: openjdk11
-      before_install:
-        - wget https://github.com/fuzzitdev/fuzzit/releases/latest/download/fuzzit_Linux_x86_64 -O fuzzit
-        - chmod a+x fuzzit
-      script: mvn clean package -DskipTests
-      after_script:
-        - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests base64RoundTrip" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
-        - ./fuzzit create job --engine jqf --type fuzzing --args "com.github.nitram509.jmacaroons.FuzzTests macaroonSerialization" nickrobison-usds-gh/jmacaroons jmacaroons-fuzz/target/fuzzing-fat-tests.jar
-
-
-
+  sonarcloud:
+    organization: "nickrobison-usds"
+    token:
+      secure: 4SvqGV6jTKNLnYvOEn+Wpf+TEFwJLED7l8BtZ/W+3QWYHG+HmOBi9OSvx1lvQe9Hqxg+zBKWvhxltqjq9koPgnjweWggC/M+V7EFAGUn4mS75lV+Om3uRLPQEjZg7oQvR9xpZ+nQL71ZBQiY1wKhFGpwT6ULEDw5t//UtoDxePduOuOZ1Jq218dd14hCcs+fGcudRvqcIrnLTF2cQ+0tXTx/rkwSu2mmE+c9OieZRv5134xCwiVHeKlMTkEzgEXenwZ+CxS3C4P/j9LL1bpCohQVGJc5qBVJ21YXqu7S8tcBkDR/uE8+6e7St3L1ATT6s1Kw9xXYLPD0FcSJ1K9IFZPkEis0Iig0+bL7oY+OKhPRe4F4H5jnp9dFH/aYsDR52XE/jpPmI2vRXvsu2K2//+uKuGGNxTvMSmMBlm0dxYs7VTa8iCKLlzvZLXEVSsdH6nW7bqd6BtYtxgObhNxf2go5rWVQalvEhYRccvII8Y+m70oQRV0EKon7kOwbrFTKWByMVu+aUOsIB2N0PcvdipsZKymm2sVmxFh2Uu9ONo7yeFhmWvOCRTQpWi3rZKFQ8EZ6HSUhpMFrL5y4CoZxtCEUETEixavAqeFmyQXrkbQKiWQAND5joKR31Jda1iCnU7SNpHW2h04PGV2vv/TZS8k9mC6XTp02IhUda5W64Dk=
