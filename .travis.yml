@@ -14,10 +14,10 @@ before_install:
   CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=nickrobison-usds_jmacaroons
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install cobertura:cobertura sonar:sonar -Dsonar.projectKey=nickrobison-usds_jmacaroons
 
-after_success:
-- mvn clean cobertura:cobertura coveralls:cobertura
+#after_success:
+#- mvn clean cobertura:cobertura coveralls:cobertura
 
 jobs:
   include:
