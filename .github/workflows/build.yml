@@ -1,0 +1,39 @@
+name: Build and test
+on:
+  workflow_dispatch: # because sometimes you just want to force a branch to have tests run
+  pull_request:
+    branches:
+      - "**"
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        java-version:
+          - 11
+          - 1.8
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Disable shallow clones so Sonar can have all the data
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+      - name: Run Java Tests
+        run: mvn test
+      - name: Sonar analysis
+        run: mvn sonar:sonar -Dsonar.projectKey=jmacaroons \
+          -Dsonar.organization=nickrobison-usds \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java-version == '11' }}
