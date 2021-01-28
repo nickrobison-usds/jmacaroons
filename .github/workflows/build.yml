@@ -16,7 +16,6 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
-          - windows-latest
         java-version:
           - 11
           - 1.8
@@ -32,8 +31,5 @@ jobs:
       - name: Run Java Tests
         run: mvn test
       - name: Sonar analysis
-        run: mvn sonar:sonar -Dsonar.projectKey=jmacaroons \
-          -Dsonar.organization=nickrobison-usds \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        run: mvn sonar:sonar -Dsonar.projectKey=jmacaroons -Dsonar.organization=nickrobison-usds -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.java-version == '11' }}
