@@ -27,4 +27,4 @@ jobs:
       - name: Build java
         run: mvn package
       - name: Fuzz
-        run:  java -jar zest-cli.jar -e jmacaroons-fuzz/target/fuzzing-fat-tests.jar com.github.nitram509.jmacaroons.FuzzTests ${{ matrix.method }} -d 1m
+        run:  java -jar zest-cli.jar -e jmacaroons-fuzz/target/fuzzing-fat-tests.jar com.github.nitram509.jmacaroons.FuzzTests ${{ matrix.method }} -d 55m
