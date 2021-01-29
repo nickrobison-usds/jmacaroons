@@ -101,7 +101,7 @@ public class MacaroonJSONV2 {
         if (this.getSignature().equals(""))  {
             return Base64.decode(this.getSignature64());
         }
-        return this.getSignature().getBytes();
+        return this.getSignature().getBytes(RAW_BYTE_CHARSET);
     }
 
     @JsonIgnore

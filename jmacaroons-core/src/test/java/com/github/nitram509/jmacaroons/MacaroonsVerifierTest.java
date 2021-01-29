@@ -29,8 +29,6 @@ import static org.fest.assertions.Fail.fail;
 
 public class MacaroonsVerifierTest {
 
-  private static SimpleDateFormat ISO_DateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-
   private String identifier;
   private String secret;
   private String location;
@@ -132,7 +130,8 @@ public class MacaroonsVerifierTest {
   }
 
   private String createTimeStamp1WeekInFuture() {
-    return ISO_DateFormat.format(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24 * 7)));
+    final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+    return df.format(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24 * 7)));
   }
 
 }

@@ -105,10 +105,10 @@ class MacaroonsSerializer {
         serialized.setLocation(macaroon.location);
 
         // Identifier
-        if (UTF8.validUTF8(macaroon.identifier.getBytes())) {
+        if (UTF8.validUTF8(macaroon.identifier.getBytes(IDENTIFIER_CHARSET))) {
             serialized.setIdentifier(macaroon.identifier);
         } else {
-            serialized.setIdentifier64(Base64.encodeUrlSafeToString(macaroon.identifier.getBytes()));
+            serialized.setIdentifier64(Base64.encodeUrlSafeToString(macaroon.identifier.getBytes(IDENTIFIER_CHARSET)));
         }
 
         // Signature

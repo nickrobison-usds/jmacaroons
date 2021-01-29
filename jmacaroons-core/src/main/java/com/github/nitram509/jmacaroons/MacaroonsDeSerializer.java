@@ -42,8 +42,9 @@ class MacaroonsDeSerializer {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  private static final String MACAROON_IS_NULL = "Macaroon cannot be null";
 
-    public static List<Macaroon> deserialize(String serializedMacaroon) throws NotDeSerializableException {
+  public static List<Macaroon> deserialize(String serializedMacaroon) throws NotDeSerializableException {
         assert serializedMacaroon != null;
 
         // Determine which format to use
@@ -72,6 +73,10 @@ class MacaroonsDeSerializer {
       jsonValue = mapper.readTree(macaroonBytes);
     } catch (IOException e) {
       throw new NotDeSerializableException(e.getCause());
+    }
+
+    if (jsonValue == null) {
+      throw new NotDeSerializableException(MACAROON_IS_NULL);
     }
 
     final List<Macaroon> macaroons = new ArrayList<>();
@@ -110,6 +115,11 @@ class MacaroonsDeSerializer {
       throw new NotDeSerializableException(e.getCause());
     }
 
+
+    if (jsonMacaroon == null) {
+      throw new NotDeSerializableException(MACAROON_IS_NULL);
+    }
+
     // Extract the caveats
     return new Macaroon(jsonMacaroon.getLocation(),
             jsonMacaroon.parseIdentifier(),
@@ -141,7 +151,7 @@ class MacaroonsDeSerializer {
         signature = parseSignature(packet, SIGNATURE_BYTES);
       }
     }
-    return new Macaroon(location, identifier, signature, caveats.toArray(new CaveatPacket[caveats.size()]), MacaroonVersion.VERSION_1);
+    return new Macaroon(location, identifier, signature, caveats.toArray(new CaveatPacket[0]), MacaroonVersion.VERSION_1);
   }
 
   private static byte[] parseSignature(Packet packet, byte[] signaturePacketData) {

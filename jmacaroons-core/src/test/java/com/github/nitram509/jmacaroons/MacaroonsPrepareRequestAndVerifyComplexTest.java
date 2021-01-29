@@ -26,19 +26,16 @@ public class MacaroonsPrepareRequestAndVerifyComplexTest {
 
   private String identifier;
   private String secret;
-  private String location;
   private String caveat_key;
-  private String publicIdentifier;
   private Macaroon M;
   private Macaroon DP;
   private Macaroon D;
-  private Macaroon E;
 
   @BeforeClass
-  public void setUp() throws Exception {
-    location = "http://mybank/";
+  public void setUp() {
+    String location = "http://mybank/";
     secret = "this is a different super-secret key; never use the same secret twice";
-    publicIdentifier = "we used our other secret key";
+    String publicIdentifier = "we used our other secret key";
     M = new MacaroonsBuilder(location, secret, publicIdentifier)
         .add_first_party_caveat("account = 3735928559")
         .getMacaroon();
