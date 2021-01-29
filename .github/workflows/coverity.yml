@@ -7,7 +7,7 @@ on:
     paths:
       - .github/workflows/coverity.yml
   schedule:
-    - cron: '0 0 0 ? * 1/7 *' # Weekly on Sunday at 00:00 UTC
+    - cron: '0 0 * * 0' # Weekly on Sunday at 00:00 UTC
 
 jobs:
   latest:
