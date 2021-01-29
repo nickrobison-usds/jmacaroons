@@ -29,7 +29,7 @@ jobs:
         with:
           java-version: ${{ matrix.java-version }}
       - name: Run Java Tests
-        run: mvn test
+        run: mvn package
       - name: Sonar analysis
         run: mvn sonar:sonar -Dsonar.projectKey=jmacaroons -Dsonar.organization=nickrobison-usds -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.java-version == '11' }}
