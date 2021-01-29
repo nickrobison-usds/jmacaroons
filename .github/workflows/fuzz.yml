@@ -1,0 +1,30 @@
+name: Fuzz it
+on:
+  workflow_dispatch: # because sometimes you just want to force a branch to have tests run
+  push:
+    branches:
+      - "**"
+    paths:
+      - .github/workflows/fuzz.yml
+  schedule:
+    - cron: '0 18 * * *' # Daily at 18:00 UTC
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        method:
+          - macaroonSerialization
+          - base64RoundTrip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Build java
+        run: mvn package
+      - name: Fuzz
+        run:  java -jar zest-cli.jar -e jmacaroons-fuzz/target/fuzzing-fat-tests.jar com.github.nitram509.jmacaroons.FuzzTests ${{ matrix.method }} -d 1m
